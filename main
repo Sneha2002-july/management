@@ -1,0 +1,504 @@
+package com.hospitalInformationSystem.doctorRegistration;
+import javax.swing.*;
+import javax.swing.border.*;
+import javax.swing.table.*;
+import java.awt.*;
+import java.awt.event.*;
+
+public class App {
+    public static void main(String[] args) {
+        SwingUtilities.invokeLater(DoctorManagementUI::new);
+    }
+}
+package com.hospitalInformationSystem.doctorRegistration;
+
+public class Doctor {
+    private String name;
+    private String contact;
+    private String medicalId;
+    private String specialization;
+    private String startTime;
+    private String endTime;
+    public String getStartTime() {
+		return startTime;
+	}
+
+	public String getEndTime() {
+		return endTime;
+	}
+
+	private String workingHours;
+
+    public Doctor(String name, String contact, String medicalId, String specialization, String startTime, String endTime) {
+        this.name = name;
+        this.contact = contact;
+        this.medicalId = medicalId;
+        this.specialization = specialization;
+        this.workingHours = startTime + " - " + endTime;
+    }
+
+    public String getContact() {
+		return contact;
+	}
+
+	public void setContact(String contact) {
+		this.contact = contact;
+	}
+
+	public String getName() {
+        return name;
+    }
+
+    public String getSpecialization() {
+        return specialization;
+    }
+
+    public String getWorkingHours() {
+        return workingHours;
+    }
+}
+package com.hospitalInformationSystem.doctorRegistration;
+
+import javax.swing.*;
+import javax.swing.border.*;
+import javax.swing.table.*;
+import java.awt.*;
+import java.awt.event.*;
+import java.util.ArrayList;
+import java.util.List;
+
+public class DoctorBrowserPage {
+    private JFrame frame;
+    private JTextField searchField;
+    private JTable doctorTable;
+    private DefaultTableModel tableModel;
+    private List<Doctor> doctorList;
+
+    public DoctorBrowserPage(List<Doctor> doctors) {
+        this.doctorList = doctors;
+
+        // Frame setup
+        frame = new JFrame("Doctor Browser");
+        frame.setSize(800, 600);
+        frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+        frame.setLayout(new BorderLayout());
+
+        // Search Panel
+        JPanel searchPanel = new JPanel(new BorderLayout(5, 5));
+        searchPanel.setBorder(new EmptyBorder(10, 10, 10, 10));
+
+        JLabel searchLabel = new JLabel("Search: ");
+        searchLabel.setFont(new Font("Arial", Font.BOLD, 14));
+
+        searchField = new JTextField();
+        searchField.setFont(new Font("Arial", Font.PLAIN, 14));
+        searchField.addKeyListener(new KeyAdapter() {
+            @Override
+            public void keyReleased(KeyEvent e) {
+                filterTable(searchField.getText());
+            }
+        });
+
+        searchPanel.add(searchLabel, BorderLayout.WEST);
+        searchPanel.add(searchField, BorderLayout.CENTER);
+
+        // Doctor Table
+        String[] columnNames = {"Name", "Specialization", "Contact", "Working Hours"};
+        tableModel = new DefaultTableModel(columnNames, 0);
+        doctorTable = new JTable(tableModel);
+
+        doctorTable.setFont(new Font("Arial", Font.PLAIN, 14));
+        doctorTable.setRowHeight(25);
+        doctorTable.getTableHeader().setFont(new Font("Arial", Font.BOLD, 14));
+        doctorTable.getTableHeader().setBackground(new Color(70, 130, 180));
+        doctorTable.getTableHeader().setForeground(Color.WHITE);
+
+        JScrollPane scrollPane = new JScrollPane(doctorTable);
+
+        // Add Components
+        frame.add(searchPanel, BorderLayout.NORTH);
+        frame.add(scrollPane, BorderLayout.CENTER);
+
+        populateTable(); // Populate the table initially
+
+        frame.setVisible(true);
+    }
+
+    private void populateTable() {
+        tableModel.setRowCount(0); // Clear table
+        for (Doctor doctor : doctorList) {
+            tableModel.addRow(new Object[]{
+                    doctor.getName(),
+                    doctor.getSpecialization(),
+                    doctor.getContact(),
+                    doctor.getStartTime() + " - " + doctor.getEndTime()
+            });
+        }
+    }
+
+    private void filterTable(String query) {
+        tableModel.setRowCount(0);
+        for (Doctor doctor : doctorList) {
+            if (doctor.getName().toLowerCase().contains(query.toLowerCase())
+                    || doctor.getSpecialization().toLowerCase().contains(query.toLowerCase())) {
+                tableModel.addRow(new Object[]{
+                        doctor.getName(),
+                        doctor.getSpecialization(),
+                        doctor.getContact(),
+                        doctor.getStartTime() + " - " + doctor.getEndTime()
+                });
+            }
+        }
+    }
+}
+package com.hospitalInformationSystem.doctorRegistration;
+
+import java.awt.Color;
+import java.awt.FlowLayout;
+import java.awt.Font;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.Insets;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+
+import javax.swing.BorderFactory;
+import javax.swing.JButton;
+import javax.swing.JComboBox;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JSpinner;
+import javax.swing.JTable;
+import javax.swing.JTextField;
+import javax.swing.SpinnerDateModel;
+import javax.swing.border.CompoundBorder;
+import javax.swing.border.LineBorder;
+import javax.swing.border.TitledBorder;
+import javax.swing.table.DefaultTableModel;
+
+public class DoctorFormPanel {
+    private JPanel panel;
+    private JTextField nameField, contactField, medicalIdField;
+    private JComboBox<String> specializationDropdown;
+    private JSpinner startTimeSpinner, endTimeSpinner;
+    private JButton saveButton, clearButton;
+    private JTable table;
+    private DefaultTableModel tableModel;
+    private int selectedRow = -1;
+
+    public DoctorFormPanel() {
+        panel = new JPanel(new GridBagLayout());
+        panel.setBorder(new CompoundBorder(
+                new TitledBorder(
+                        new LineBorder(new Color(70, 130, 180), 2, true),
+                        "Add or Update Doctor",
+                        TitledBorder.LEADING,
+                        TitledBorder.TOP,
+                        new Font("Arial", Font.BOLD, 16),
+                        new Color(70, 130, 180)
+                ),
+                BorderFactory.createEmptyBorder(5, 10, 5, 10) // Adjust padding inside the border
+        ));
+        panel.setBackground(new Color(240, 248, 255));
+
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.insets = new Insets(5, 10, 5, 10);
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.weighty = 0; // No extra space above the "Name" field
+
+        // Row 1: Name
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        gbc.weightx = 0.3;
+        panel.add(new JLabel("Name:"), gbc);
+
+        gbc.gridx = 1;
+        gbc.weightx = 0.7;
+        nameField = new JTextField();
+        panel.add(nameField, gbc);
+
+        // Row 2: Contact
+        gbc.gridx = 0;
+        gbc.gridy = 1;
+        gbc.weightx = 0.3;
+        panel.add(new JLabel("Contact:"), gbc);
+
+        gbc.gridx = 1;
+        gbc.weightx = 0.7;
+        contactField = new JTextField();
+        panel.add(contactField, gbc);
+
+        // Row 3: Medical ID
+        gbc.gridx = 0;
+        gbc.gridy = 2;
+        gbc.weightx = 0.3;
+        panel.add(new JLabel("Medical ID:"), gbc);
+
+        gbc.gridx = 1;
+        gbc.weightx = 0.7;
+        medicalIdField = new JTextField();
+        panel.add(medicalIdField, gbc);
+
+        // Row 4: Specialization
+        gbc.gridx = 0;
+        gbc.gridy = 3;
+        gbc.weightx = 0.3;
+        panel.add(new JLabel("Specialization:"), gbc);
+
+        gbc.gridx = 1;
+        gbc.weightx = 0.7;
+        specializationDropdown = new JComboBox<>(new String[]{"Cardiology", "Neurology", "Orthopedics"});
+        panel.add(specializationDropdown, gbc);
+
+        // Row 5: Start Time
+        gbc.gridx = 0;
+        gbc.gridy = 4;
+        gbc.weightx = 0.3;
+        panel.add(new JLabel("Start Time:"), gbc);
+
+        gbc.gridx = 1;
+        gbc.weightx = 0.7;
+        startTimeSpinner = createTimeSpinner();
+        panel.add(startTimeSpinner, gbc);
+
+        // Row 6: End Time
+        gbc.gridx = 0;
+        gbc.gridy = 5;
+        gbc.weightx = 0.3;
+        panel.add(new JLabel("End Time:"), gbc);
+
+        gbc.gridx = 1;
+        gbc.weightx = 0.7;
+        endTimeSpinner = createTimeSpinner();
+        panel.add(endTimeSpinner, gbc);
+
+        // Buttons
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 0));
+        saveButton = new JButton("Save");
+        clearButton = new JButton("Clear");
+        buttonPanel.add(saveButton);
+        buttonPanel.add(clearButton);
+
+        gbc.gridx = 0;
+        gbc.gridy = 6;
+        gbc.gridwidth = 2;
+        gbc.weightx = 1.0;
+        gbc.anchor = GridBagConstraints.CENTER;
+        panel.add(buttonPanel, gbc);
+
+        // Table to Display Data
+        String[] columnNames = {"Name", "Contact", "Medical ID", "Specialization", "Start Time", "End Time"};
+        tableModel = new DefaultTableModel(columnNames, 0);
+        table = new JTable(tableModel);
+
+        JScrollPane tableScrollPane = new JScrollPane(table);
+        tableScrollPane.setBorder(BorderFactory.createTitledBorder("Doctors List"));
+        gbc.gridx = 0;
+        gbc.gridy = 7;
+        gbc.gridwidth = 2;
+        gbc.weighty = 1.0;
+        gbc.fill = GridBagConstraints.BOTH;
+        panel.add(tableScrollPane, gbc);
+
+        // Button Actions
+        saveButton.addActionListener(e -> saveDoctorData());
+        clearButton.addActionListener(e -> clearForm());
+    }
+
+    private JSpinner createTimeSpinner() {
+        JSpinner spinner = new JSpinner(new SpinnerDateModel());
+        JSpinner.DateEditor timeEditor = new JSpinner.DateEditor(spinner, "hh:mm a");
+        spinner.setEditor(timeEditor);
+        spinner.setValue(new Date()); // Default value is the current time
+        return spinner;
+    }
+
+    private void saveDoctorData() {
+        SimpleDateFormat timeFormat = new SimpleDateFormat("hh:mm a");
+        String startTime = timeFormat.format(startTimeSpinner.getValue());
+        String endTime = timeFormat.format(endTimeSpinner.getValue());
+
+        // Collect data
+        String name = nameField.getText().trim();
+        String contact = contactField.getText().trim();
+        String medicalId = medicalIdField.getText().trim();
+        String specialization = specializationDropdown.getSelectedItem().toString();
+
+        // Validate fields
+        if (name.isEmpty() || contact.isEmpty() || medicalId.isEmpty()) {
+            JOptionPane.showMessageDialog(panel, "Please fill all required fields.", "Validation Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        // Add to table
+        tableModel.addRow(new Object[]{name, contact, medicalId, specialization, startTime, endTime});
+        JOptionPane.showMessageDialog(panel, "Doctor added successfully!", "Success", JOptionPane.INFORMATION_MESSAGE);
+
+        // Clear form
+        clearForm();
+    }
+
+    public void clearForm() {
+        nameField.setText("");
+        contactField.setText("");
+        medicalIdField.setText("");
+        specializationDropdown.setSelectedIndex(0);
+        startTimeSpinner.setValue(new Date());
+        endTimeSpinner.setValue(new Date());
+        selectedRow = -1;
+    }
+
+    public JPanel getPanel() {
+        return panel;
+    }
+
+    public static void main(String[] args) {
+        JFrame frame = new JFrame("Doctor Management");
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.setSize(800, 600);
+        frame.add(new DoctorFormPanel().getPanel());
+        frame.setVisible(true);
+    }
+}
+package com.hospitalInformationSystem.doctorRegistration;
+
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.FlowLayout;
+import java.awt.Font;
+import java.util.ArrayList;
+import java.util.List;
+
+import javax.swing.BorderFactory;
+import javax.swing.JButton;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.SwingUtilities;
+
+public class DoctorManagementUI {
+    private JFrame frame;
+    private DoctorFormPanel formPanel;
+    private List<Doctor> doctorList;
+
+    public DoctorManagementUI() {
+        doctorList = new ArrayList<>();
+
+        // Frame setup
+        frame = new JFrame("Doctor Management System");
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.setSize(900, 700);
+        frame.setLayout(new BorderLayout());
+
+        // Header
+        JLabel headerLabel = new JLabel("Doctor Management System", JLabel.CENTER);
+        headerLabel.setFont(new Font("Arial", Font.BOLD, 24));
+        headerLabel.setOpaque(true);
+        headerLabel.setBackground(new Color(70, 130, 180));
+        headerLabel.setForeground(Color.WHITE);
+        headerLabel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+
+        // Form Panel
+        formPanel = new DoctorFormPanel();
+        formPanel.setActionListener(e -> {
+            Doctor doctor = (Doctor) e.getSource();
+            if ("Save".equals(e.getActionCommand())) {
+                doctorList.add(doctor);
+                JOptionPane.showMessageDialog(frame, "Doctor added successfully!");
+            } else if ("Update".equals(e.getActionCommand())) {
+                int rowIndex = formPanel.getSelectedRow();
+                if (rowIndex >= 0) {
+                    doctorList.set(rowIndex, doctor);
+                    JOptionPane.showMessageDialog(frame, "Doctor updated successfully!");
+                } else {
+                    JOptionPane.showMessageDialog(frame, "No doctor selected for update!");
+                }
+            }
+        });
+
+        // Button Panel
+        JPanel buttonPanel = new JPanel(new FlowLayout());
+        JButton browseButton = new JButton("Browse Doctors");
+        browseButton.setBackground(new Color(100, 149, 237)); // Cornflower Blue
+        browseButton.setForeground(Color.WHITE);
+        browseButton.setFont(new Font("Arial", Font.BOLD, 14));
+        browseButton.addActionListener(e -> new DoctorBrowserPage(doctorList));
+
+        buttonPanel.add(browseButton);
+
+        // Add Components
+        frame.add(headerLabel, BorderLayout.NORTH);
+        frame.add(formPanel.getPanel(), BorderLayout.CENTER);
+        frame.add(buttonPanel, BorderLayout.SOUTH);
+
+        frame.setVisible(true);
+    }
+
+    public static void main(String[] args) {
+        SwingUtilities.invokeLater(DoctorManagementUI::new);
+    }
+}
+package com.hospitalInformationSystem.doctorRegistration;
+
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Font;
+
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JTable;
+import javax.swing.border.LineBorder;
+import javax.swing.border.TitledBorder;
+import javax.swing.table.DefaultTableModel;
+
+public class DoctorTablePanel {
+    private JPanel panel;
+    private JTable doctorTable;
+    private DefaultTableModel tableModel;
+
+    public DoctorTablePanel() {
+        panel = new JPanel(new BorderLayout());
+        panel.setBorder(new TitledBorder(
+                new LineBorder(new Color(70, 130, 180), 2, true),
+                "Doctor List",
+                TitledBorder.LEADING,
+                TitledBorder.TOP,
+                new Font("Arial", Font.BOLD, 16),
+                new Color(70, 130, 180)
+        ));
+        panel.setBackground(Color.WHITE);
+
+        // Table Setup
+        String[] columnNames = {"Name", "Specialization", "Working Hours"};
+        tableModel = new DefaultTableModel(columnNames, 0);
+        doctorTable = new JTable(tableModel);
+
+        doctorTable.setFont(new Font("Arial", Font.PLAIN, 14));
+        doctorTable.setRowHeight(25);
+        doctorTable.getTableHeader().setFont(new Font("Arial", Font.BOLD, 14));
+        doctorTable.getTableHeader().setBackground(new Color(70, 130, 180));
+        doctorTable.getTableHeader().setForeground(Color.WHITE);
+
+        panel.add(new JScrollPane(doctorTable), BorderLayout.CENTER);
+    }
+
+    public JPanel getPanel() {
+        return panel;
+    }
+
+    public void addDoctor(Doctor doctor) {
+        tableModel.addRow(new Object[]{doctor.getName(), doctor.getSpecialization(), doctor.getWorkingHours()});
+    }
+
+    public void updateDoctor(Doctor doctor, int row) {
+        if (row >= 0 && row < tableModel.getRowCount()) {
+            tableModel.setValueAt(doctor.getName(), row, 0);
+            tableModel.setValueAt(doctor.getSpecialization(), row, 1);
+            tableModel.setValueAt(doctor.getWorkingHours(), row, 2);
+        }
+    }
+}
